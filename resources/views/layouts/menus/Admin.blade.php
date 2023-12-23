@@ -323,6 +323,11 @@
                             {{ _lang('Attendance Report') }}
                         </a>
                     </li>
+                     <li @if (Request::is('reports/student_attendance_ratio') || Request::is('reports/student_attendance_ratio/view')) class="active" @endif>
+                        <a href="{{ url('reports/student_attendance_ratio') }}">
+                            Attendance Ratio
+                        </a>
+                    </li>
                 @endif
 
                 @if ($user->can('student_attendance_status_report.view'))

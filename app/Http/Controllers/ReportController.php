@@ -65,6 +65,83 @@ class ReportController extends Controller
 		}
 	}
 
+	public function student_attendance_ratio(Request $request, $view = "")
+	{
+		$class_id = 0;
+		$section_id = "";
+		$month = "";
+		if ($view == "") {
+			return view('backend.reports.student_attendance_ratio', compact('class_id', 'section_id', 'month'));
+		} else {
+			$class_id = $request->class_id;
+			$section_id = $request->section_id;
+			$class = get_class_name($class_id);
+			$section = get_section_name($section_id);
+			$month = (explode("/", $request->month));
+			$num_of_days = cal_days_in_month(CAL_GREGORIAN, $month[0], $month[1]);
+
+			$query = DB::table('student_attendances')
+				->whereMonth('date', $month[0])
+				->whereYear('date', $month[1])
+				->orderBy('date', 'asc')
+				->get();
+
+			$query2 = DB::table("students")
+				->join("student_sessions", "students.id", "=", "student_sessions.student_id")
+				->where("student_sessions.class_id", $class_id)
+				->where("student_sessions.section_id", $section_id)
+				->orderBy('students.id', 'asc')
+				->get();
+
+			$report_data = array();
+			$students = array();
+
+			// for ($i = 1; $i <= $num_of_days; $i++) {
+			// 	$date = new \DateTime($month[1] . "-" . $month[0] . "-" . $i);
+			// 	$date = $date->format('Y-m-d');
+			// 	$attendance_value = array("0" => "", "1" => "P", "2" => "A", "3" => "L", "4" => "H", "5" => "EL");
+			// 	foreach ($query as $data) {
+			// 		if ($date == $data->date) {
+			// 			$report_data[$data->student_id][$date] = $attendance_value[$data->attendance];
+			// 		} else {
+			// 			if (!isset($report_data[$data->student_id][$date])) {
+			// 				$report_data[$data->student_id][$date] = $attendance_value[0];
+			// 			}
+			// 		}
+			// 	}
+			// }
+
+			foreach ($query2 as $student) {
+				$students[$student->student_id] = $student;
+				$present = DB::table('student_attendances')
+					->select(DB::raw('count(*) as present'))
+					->whereMonth('date', $month[0])
+					->whereYear('date', $month[1])
+					->where('student_id', $student->student_id)
+					->where('attendance', 1)
+					->orderBy('date', 'asc')
+					->get();
+				$absent = DB::table('student_attendances')
+					->select(DB::raw('count(*) as absent'))
+					->whereMonth('date', $month[0])
+					->whereYear('date', $month[1])
+					->where('student_id', $student->student_id)
+					->where('attendance', 2)
+					->orderBy('date', 'asc')
+					->get();
+				// dd($presen);
+				$report_data[$student->student_id]['present'] = (!$present->isEmpty()) ? $present[0]->present : 0;
+				$report_data[$student->student_id]['absent'] = (!$absent->isEmpty()) ? $absent[0]->absent : 0;
+				$ratio = $present[0]->present * 100 / ($present[0]->present + $absent[0]->absent);
+				$report_data[$student->student_id]['ratio'] = floor($ratio);
+			}
+
+			// dd($report_data);
+			$month = $request->month;
+			return view('backend.reports.student_attendance_ratio', compact('class_id', 'section_id', 'class', 'section', 'report_data', 'num_of_days', 'students', 'month'));
+		}
+	}
+
 	public function studentAttendanceReportStatus(Request $request)
 	{
 		$class_id = 0;

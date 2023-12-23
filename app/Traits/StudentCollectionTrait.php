@@ -14,6 +14,7 @@ use App\StudentCollection;
 use App\StudentCollectionDetails;
 use App\StudentCollectionDetailsSubHead;
 use App\StudentSession;
+use App\StudentWaiverConfig;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -107,6 +108,11 @@ trait StudentCollectionTrait
             return $collectionData;
         }
 
+        $waiver = StudentWaiverConfig::where('student_id', $studentId)->where('fee_head_id', $feeHeadId)->first();
+        // dd($studentId,$waiver);
+        if ($waiver) {
+            $collectionData['waiver'] = $waiver->amount * count($feeSubHeads);
+        }
         // Make response that fee is found.
         $collectionData['found_fee_amount'] = true;
         $collectionData['fee_head_id'] = $feeHeadId;
@@ -115,7 +121,7 @@ trait StudentCollectionTrait
         $collectionData['total_payable'] = $fee->fee_amount * count($feeSubHeads);
 
         // Total fine payable.
-        $collectionData['fine_payable'] = $fee->fine_amount * 0; // TODO: Will do it after check.
+        $collectionData['fine_payable'] = $fee->fine_amount * count($feeSubHeads); // TODO: Will do it after check.
 
         // Total fine and fee payable.
         $collectionData['fee_and_fine_payable'] = $collectionData['total_payable'] + $collectionData['fine_payable'];
@@ -233,7 +239,7 @@ trait StudentCollectionTrait
         array $payslipData
     ): array {
         $collectionData = [];
-        
+
         $collectionData['session_id'] = $payslipData['session_id'];
         $collectionData['id'] = $payslipData['collection_id'];
         $collectionData['invoice_date'] = $payslipData['date'];
@@ -439,7 +445,7 @@ trait StudentCollectionTrait
                 'total_payable' => $data['details']['total_payable'] ?? 0,
             ];
 
-            $studentCollectionDetails = StudentCollectionDetails::where('student_collection_id',$data['id'])->update(
+            $studentCollectionDetails = StudentCollectionDetails::where('student_collection_id', $data['id'])->update(
                 $studentCollectionDetailsData
             );
 

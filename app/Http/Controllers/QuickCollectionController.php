@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\AbsentFine;
 use App\Fee;
 use App\Student;
 use App\FeeSubHead;
@@ -69,11 +70,22 @@ class QuickCollectionController extends Controller
 
     public function show($id)
     {
+        $attendance = DB::table('student_attendances')
+            ->select(DB::raw('month(date) as month'), DB::raw('count(*) as absent'))
+            ->whereYear('date', 2023)
+            ->where('student_id', $id)
+            ->where('attendance', 2)
+            ->groupBy('month')
+            ->orderBy('date', 'asc')
+            ->get();
         $session = StudentSession::where('student_id', $id)->first();
+
         $amountConfig = Fee::where('section_id', $session->section_id)
             ->where('class_id', $session->class_id)
             ->with('feeHead')
             ->get();
+
+        $absentFine = AbsentFine::where('class_id', $session->class_id)->first();
 
         $total_fee = Fee::where('section_id', $session->section_id)
             ->where('class_id', $session->class_id)
@@ -113,12 +125,14 @@ class QuickCollectionController extends Controller
 
         //     $feeHeads[$key]->feeSubHeads = $updatedFeeSubHeads;
         // }
-
+        // dd($absentFine->fee_amount);
         return view('backend.quick_collection.show', [
             'studentSession' => $this->studentSessionService->findStudentSessionById($id),
             'feeHeads' => $feeHeads,
             'total_fee' => $total_fee,
-            'total_fine' => $total_fine
+            'total_fine' => $total_fine,
+            'attendence' => $attendance,
+            'absentFine' => $absentFine
         ]);
     }
 

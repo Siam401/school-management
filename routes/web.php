@@ -631,6 +631,7 @@ Route::group(['middleware' => ['auth']], function () {
 		//Report Controller
 		Route::any('student_attendance_report/status', 'ReportController@studentAttendanceReportStatus')->name('reports.student_attendance_report.status');
 		Route::match(['get', 'post'], 'reports/student_attendance_report/{view?}', 'ReportController@student_attendance_report')->name('reports.student_attendance_report');
+		Route::match(['get', 'post'], 'reports/student_attendance_ratio/{view?}', 'ReportController@student_attendance_ratio')->name('reports. student_attendance_ratio');
 		Route::match(['get', 'post'], 'reports/staff_attendance_report/{view?}', 'ReportController@staff_attendance_report')->name('reports.staff_attendance_report');
 		Route::match(['get', 'post'], 'reports/student_id_card/{view?}', 'ReportController@student_id_card')->name('reports.student_id_card');
 		Route::match(['get', 'post'], 'reports/exam_report/{view?}', 'ReportController@exam_report')->name('reports.exam_report');
